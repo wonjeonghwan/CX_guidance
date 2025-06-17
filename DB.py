@@ -26,8 +26,11 @@ def save_message(customer_id, user_id, channel_id, message):
         customer_id, user_id, channel_id, message, response, timestamp
     ) VALUES (?, ?, ?, ?, ?, ?)''',
     (customer_id, user_id, channel_id, message, None, datetime.now().isoformat()))
+
+    message_id=c.lastrowid
     conn.commit()
     conn.close()
+    return message_id
 
 # ✅ LLM 응답 저장
 def update_response(number, response_text):
