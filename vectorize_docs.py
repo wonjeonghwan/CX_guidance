@@ -1,53 +1,48 @@
 import os
 import shutil
-from langchain_community.document_loaders import TextLoader         # 문서 불러오기
-from langchain.text_splitter import RecursiveCharacterTextSplitter  # 텍스트 쪼개기
-from langchain.embeddings import OpenAIEmbeddings                   # 문장 임베딩
-from langchain_community.vectorstores import Chroma                 # 벡터DB
+from langchain_community.document_loaders import TextLoader
+from langchain.text_splitter import RecursiveCharacterTextSplitter
+from langchain.embeddings import OpenAIEmbeddings
+from langchain_community.vectorstores import Chroma
 
 # 경로 설정
 docs_path = "./docs"
 chroma_path = "./persist"
 
-# 기존 DB 제거 (중복 방지용)
+# 기존 벡터 DB 제거 (중복 저장 방지)
 if os.path.exists(chroma_path):
     shutil.rmtree(chroma_path)
 
-# 문서 로딩
+# 문서 로딩 및 메타데이터 추정
 documents = []
-for fname in os.listdir(docs_path):
-    if fname.endswith(".txt"):
-        path = os.path.join(docs_path, fname)
+for root, dirs, files in os.walk(docs_path):
+    for fname in files:
+        if not fname.endswith(".txt"):
+            continue
+
+        path = os.path.join(root, fname)
         loader = TextLoader(path, encoding="utf-8")
         raw_docs = loader.load()
 
-        # 메타데이터 추정
-        if "커리큘럼" in fname:
-            category, sub = "서비스소개", "커리큘럼"
-        elif "약관" in fname:
-            category, sub = "약관", "서비스 이용"
-        elif "결제" in fname:
-            category, sub = "FAQ", "결제"
-        elif "환불" in fname:
-            category, sub = "FAQ", "환불"
-        elif "배송" in fname:
-            category, sub = "FAQ", "배송"
-        else:
-            category, sub = "기타", "기타"
+        # 상대 경로 기준으로 category / subcategory 분류
+        rel_path = os.path.relpath(path, docs_path)
+        parts = rel_path.split(os.sep)
+        category = parts[0] if len(parts) > 1 else "기타"
+        subcategory = parts[1] if len(parts) > 2 else fname.replace(".txt", "")
 
         for doc in raw_docs:
             doc.metadata.update({
                 "source_file": fname,
                 "category": category,
-                "subcategory": sub
+                "subcategory": subcategory
             })
         documents.extend(raw_docs)
 
-# 분할
-splitter = RecursiveCharacterTextSplitter(chunk_size=800, chunk_overlap=100)
+# 텍스트 청크 분할
+splitter = RecursiveCharacterTextSplitter(chunk_size=500, chunk_overlap=50)
 splits = splitter.split_documents(documents)
 
-# 임베딩 + Chroma 저장
+# 벡터화 + 저장
 embedding = OpenAIEmbeddings()
 chroma_db = Chroma.from_documents(splits, embedding, persist_directory=chroma_path)
 

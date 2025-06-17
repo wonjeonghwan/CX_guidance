@@ -2,7 +2,7 @@ import os
 from slack_bolt import App
 from slack_bolt.adapter.socket_mode import SocketModeHandler
 from dotenv import load_dotenv
-from DB import init_db, save_message, update_response
+from DB import init_db, save_message
 from rag_logic import generate_response
 
 # 환경변수 로딩
