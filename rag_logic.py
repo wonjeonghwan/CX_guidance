@@ -5,6 +5,9 @@ from langchain_openai import ChatOpenAI
 from langchain_core.output_parsers import StrOutputParser
 from langchain_core.runnables import RunnableLambda
 from DB import update_response, get_messages_by_customer
+from collections import defaultdict, deque
+
+conversation_cache = defaultdict(lambda: deque(maxlen=10))
 
 # 1. 모델 및 리트리버 설정
 llm = ChatOpenAI(model="gpt-4o-mini", temperature=0.4)
@@ -20,17 +23,22 @@ chain = (
 
 # 3. 실행용 함수
 def generate_response(user_question: str, number: int, customer_id: str):
-    # 1. 이전 대화 이력 조회
-    past_logs = get_messages_by_customer(customer_id)
+    # 1. 캐시에서 이전 대화 이력 조회
+    recent_logs = conversation_cache[customer_id]
     history_context = "\n".join(
-        f"Q: {msg}\nA: {res}" for _, msg, res in past_logs if res
+        f"Q: {q}\nA: {a}" for q, a, in recent_logs
     )
 
-    # 2. 대화 이력 + 현재 질문을 묶어서 전달
+    # 2. 캐시 + 현재 질문 묶어서 전달
     composite_question = f"{history_context}\n\n[현재 질문]\n{user_question}"
 
-    # 3. RAG 실행 및 DB 저장
+    # 3. RAG 실행
     response = chain.invoke(composite_question)
+
+    # 4. cache에 현재 Q&A 추가
+    conversation_cache[customer_id].append((user_question, response))
+
+    # 5. DB 업데이트
     update_response(number, response)
     return response
 
