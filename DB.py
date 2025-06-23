@@ -57,3 +57,17 @@ def get_messages_by_customer(customer_id):
     rows = c.fetchall()
     conn.close()
     return rows
+
+def get_last_message_by_customer(customer_id):
+    conn = sqlite3.connect("chatbot.db")
+    c = conn.cursor()
+    c.execute('''
+        SELECT number, message, response
+        FROM conversations
+        WHERE customer_id = ?
+        ORDER BY timestamp DESC
+        LIMIT 1
+    ''', (customer_id,))
+    result = c.fetchone()
+    conn.close()
+    return result  # (number, message, response) or None
