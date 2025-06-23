@@ -11,6 +11,8 @@ def init_db():
         customer_id TEXT,
         user_id TEXT,
         channel_id TEXT,
+        level TEXT,
+        keyword TEXT,
         message TEXT,
         response TEXT,
         timestamp TEXT
@@ -37,6 +39,13 @@ def update_response(number, response_text):
     conn = sqlite3.connect("chatbot.db")
     c = conn.cursor()
     c.execute("UPDATE conversations SET response = ? WHERE number = ?", (response_text, number))
+    conn.commit()
+    conn.close()
+    
+def update_analysis_result(number, level, keyword):
+    conn = sqlite3.connect("chatbot.db")
+    c = conn.cursor()
+    c.execute("UPDATE conversations SET level = ?, keyword = ? WHERE number = ?", (level, keyword, number))
     conn.commit()
     conn.close()
 
