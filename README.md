@@ -1,5 +1,9 @@
 # CX Manager Assistant
 
+CX 매니저들의 상담 퀄리티 유지를 위한 assistant Chatbot<br>
+문의사항에 대해 내부 문서를 기반으로 답변, 문의 내용을 5가지 단계로 나눠 **우선순위 분류**<br>
+환불 관련 문의시 내부 서비스를 기반으로 **환불요청에 방어**할 수 있는 방법 추천<br>
+
 **Slack 기반 챗봇**으로, CS 매니저가 Slack에 고객 메시지를 붙여넣으면 내부 지식(Chroma)을 기반으로 LLM을 통해 **응답 생성**,
 상담 종료 시에는 **Issue 요약 & 우선순위(Level) 분류**를 Google Sheet에 저장합니다.
 
@@ -13,7 +17,6 @@
 
 ## ⚙️ Requirements
 
-- Python 3.10+
 - Packages
   - `langchain`, `langchain-openai`, `langchain-community`
   - `chromadb`
